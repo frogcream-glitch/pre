@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>근거의 피라미드</title>
+  <style>
+/* ── 웹폰트 ── */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+:root {
+  --bg:              #ffffff;
+  --bg-secondary:    #f7f5f5;
+  --bg-elevated:     #ffffff;
+  --label:           #1d1d1f;
+  --label-secondary: #6e6e73;
+  --label-tertiary:  #86868b;
+  --separator:       rgba(0, 0, 0, .10);
+  --fill-hover:      rgba(0, 0, 0, .04);
+  --accent:          #862633;
+  --accent-emphasis: #6b1e29;
+  --accent-fill:     rgba(134, 38, 51, .07);
+  --shadow-card:     0 1px 3px rgba(0, 0, 0, .04);
+  --shadow-float:    0 8px 28px rgba(0, 0, 0, .12);
+  --code-bg:         #f7f5f5;
+  --material:        rgba(255, 255, 255, .72);
+
+  --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+          "SF Pro Display", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --type-hero:    clamp(34px, 3.8vw, 56px);
+  --type-display: clamp(26px, 2.8vw, 40px);
+  --type-title:   clamp(19px, 1.6vw, 24px);
+  --type-lead:    clamp(17px, 1.4vw, 20px);
+  --type-body:    17px;
+  --type-caption: 13px;
+  --type-label:   12px;
+
+  --tracking-hero:  -.025em;
+  --tracking-title: -.02em;
+  --tracking-body:  -.01em;
+  --tracking-label:  .06em;
+
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+
+  --safe-x: clamp(24px, 5.2vw, 80px);
+  --safe-y: clamp(20px, 3.2vh, 42px);
+  --sidebar-w: 280px;
+  --measure: 940px;
+
+  --r-sm: 8px; --r-md: 12px; --r-lg: 18px; --r-xl: 22px; --r-pill: 980px;
+  --ease: cubic-bezier(.28, .11, .32, 1);
+  --dur-fast: .18s; --dur: .3s; --dur-slow: .5s;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--type-body);
+  letter-spacing: var(--tracking-body);
+  background: var(--bg-secondary);
+  color: var(--label);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+h1, h2, h3, h4, p { margin: 0; }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
+
+.icon {
+  width: 20px; height: 20px;
+  fill: none; stroke: currentColor; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ── 레이아웃 ── */
+.app { display: flex; height: 100vh; }
+
+/* ── 사이드바 ── */
+.sidebar {
+  width: var(--sidebar-w);
+  flex: 0 0 var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--separator);
+  transition: margin-left var(--dur) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+body.is-collapsed .sidebar { margin-left: calc(var(--sidebar-w) * -1); opacity: 0; }
+
+.sidebar__head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3);
+  padding: var(--sp-5) 20px var(--sp-4);
+}
+.sidebar__eyebrow {
+  font-size: var(--type-label); font-weight: 600; letter-spacing: var(--tracking-label);
+  color: var(--accent); text-transform: uppercase; margin-bottom: var(--sp-1);
+}
+.sidebar__title { font-size: 19px; font-weight: 700; letter-spacing: var(--tracking-title); }
+
+.icon-btn {
+  display: grid; place-items: center;
+  width: 32px; height: 32px; border-radius: var(--r-sm);
+  color: var(--label-secondary);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.icon-btn:hover { background: var(--accent-fill); color: var(--accent); }
+
+.stage__expand {
+  position: absolute; top: 14px; left: 14px; z-index: 5;
+  opacity: 0; pointer-events: none; transition: opacity var(--dur) var(--ease);
+}
+body.is-collapsed .stage__expand { opacity: 1; pointer-events: auto; }
+
+/* ── 사이드바 내비 ── */
+.sidebar__nav {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 0 14px var(--sp-4);
+  scrollbar-width: thin;
+}
+.sidebar__nav::-webkit-scrollbar { width: 6px; }
+.sidebar__nav::-webkit-scrollbar-thumb { background: var(--separator); border-radius: 3px; }
+
+.nav__item {
+  position: relative;
+  display: flex; align-items: center; gap: var(--sp-3);
+  width: 100%; text-align: left;
+  padding: 10px var(--sp-3); margin-bottom: 2px;
+  border-radius: var(--r-md);
+  transition: background var(--dur-fast) var(--ease);
+}
+.nav__item:hover { background: var(--fill-hover); }
+.nav__item.is-active { background: var(--accent-fill); }
+.nav__item.is-active::before {
+  content: ""; position: absolute; left: 0; top: 50%;
+  width: 3px; height: 22px; margin-top: -11px;
+  border-radius: 0 3px 3px 0; background: var(--accent);
+}
+.nav__item.is-active .nav__name { color: var(--accent); }
+.nav__text { display: block; min-width: 0; }
+.nav__name { display: block; font-size: 15px; font-weight: 600; letter-spacing: var(--tracking-body); }
+.nav__desc {
+  display: block;
+  font-size: var(--type-caption); font-weight: 400; color: var(--label-secondary); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── 진행률 ── */
+.sidebar__foot { padding: var(--sp-4) 20px 18px; border-top: 1px solid var(--separator); }
+.progress__label {
+  font-size: 11px; font-weight: 600; letter-spacing: var(--tracking-label);
+  text-transform: uppercase; color: var(--label-tertiary);
+}
+.progress__track {
+  height: 3px; border-radius: 2px; background: var(--separator);
+  margin: var(--sp-2) 0 7px; overflow: hidden;
+}
+.progress__bar { height: 100%; width: 0; border-radius: 2px; background: var(--accent); transition: width var(--dur) var(--ease); }
+.progress__count { font-size: var(--type-caption); color: var(--label-secondary); font-variant-numeric: tabular-nums; }
+.progress__count b { color: var(--label); font-weight: 600; }
+
+/* ── 스테이지 ── */
+.stage {
+  position: relative; flex: 1; min-width: 0;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+}
+.stage__topbar, .stage__footbar {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.stage__footbar { justify-content: flex-end; }
+.stage__topbar, .stage__footbar {
+  padding: var(--safe-y) var(--safe-x);
+  font-size: var(--type-caption); font-weight: 400; color: var(--label-tertiary);
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+.stage__slide {
+  flex: 1; min-height: 0; overflow: hidden;
+  padding: 0 var(--safe-x);
+  display: flex; flex-direction: column; justify-content: center;
+}
+
+@keyframes slide-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.slide { animation: slide-in var(--dur-slow) var(--ease) both; max-width: 1120px; width: 100%; }
+
+/* ── 장표 텍스트 ── */
+.slide__eyebrow {
+  font-size: 15px; font-weight: 600; letter-spacing: var(--tracking-body);
+  color: var(--accent); margin-bottom: 10px;
+}
+.slide__title {
+  font-size: var(--type-hero); font-weight: 700;
+  letter-spacing: var(--tracking-hero); line-height: 1.05;
+  text-wrap: balance;
+}
+.slide__lead {
+  font-size: var(--type-lead); font-weight: 500;
+  letter-spacing: var(--tracking-title); line-height: 1.45;
+  margin-top: var(--sp-5); color: var(--label-secondary);
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+.slide__lead b, .slide__lead strong { color: var(--label); font-weight: 600; }
+.slide__body { margin-top: var(--sp-7); }
+.slide__eyebrow + .slide__body { margin-top: var(--sp-4); }
+
+/* ── 표지 ── */
+.stage[data-layout="cover"]::after {
+  content: "";
+  position: absolute; top: -14%; right: -12%;
+  width: min(52vw, 640px); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(134, 38, 51, .15), rgba(134, 38, 51, .04) 62%, rgba(134, 38, 51, 0) 78%);
+  pointer-events: none; z-index: 0;
+}
+.stage[data-layout="cover"]::before {
+  content: "";
+  position: absolute; bottom: -16%; right: 2%;
+  width: min(34vw, 400px); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(134, 38, 51, .07), rgba(134, 38, 51, 0) 70%);
+  pointer-events: none; z-index: 0;
+}
+.stage__topbar, .stage__slide, .stage__footbar, .dock { position: relative; z-index: 1; }
+.slide--cover .slide__title {
+  font-size: clamp(38px, 4.6vw, 64px);
+  line-height: 1.04;
+  margin-top: var(--sp-2);
+}
+.slide--cover .slide__lead { margin-top: var(--sp-4); max-width: 620px; }
+.slide--cover .slide__body { margin-top: var(--sp-6); }
+.cover-info { display: grid; gap: 4px; }
+.cover-info__name {
+  font-size: 26px; font-weight: 700;
+  letter-spacing: var(--tracking-title); color: var(--label);
+}
+.cover-info__sub {
+  font-size: 17px; font-weight: 500;
+  color: var(--accent);
+}
+.cover-info__when {
+  font-size: var(--type-caption); font-weight: 400;
+  color: var(--label-tertiary); margin-top: var(--sp-4);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 카드 ── */
+.cards { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.card {
+  padding: var(--sp-5) 28px; border-radius: var(--r-lg);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-card);
+}
+.card__label {
+  font-size: var(--type-caption); font-weight: 600; letter-spacing: .04em;
+  color: var(--accent); margin-bottom: 10px;
+}
+.card__title { font-size: var(--type-title); font-weight: 600; letter-spacing: var(--tracking-title); line-height: 1.2; }
+.card__body {
+  font-size: var(--type-body); font-weight: 400; line-height: 1.6;
+  color: var(--label-secondary); margin-top: 10px;
+}
+
+/* ── 불릿 ── */
+.bullets { display: grid; gap: 18px; max-width: var(--measure); }
+.bullet { display: flex; gap: 14px; align-items: baseline; }
+.bullet__dot {
+  flex: 0 0 auto; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); transform: translateY(-3px);
+}
+.bullet__text {
+  font-size: clamp(17px, 1.5vw, 21px); font-weight: 400; line-height: 1.55;
+  color: var(--label-secondary);
+}
+.bullet__text b, .bullet__text strong { color: var(--label); font-weight: 600; }
+
+/* ── 피라미드 커스텀 ── */
+.pyramid-wrapper {
+  display: flex; justify-content: center; align-items: center;
+  width: 100%; margin-top: var(--sp-5);
+}
+.pyramid-svg { max-width: 780px; width: 100%; height: auto; }
+
+/* ── 키워드 테이블 ── */
+.kw-table {
+  width: 100%; max-width: var(--measure);
+  border-collapse: separate; border-spacing: 0;
+  border-radius: var(--r-lg); overflow: hidden;
+  border: 1px solid var(--separator);
+  font-size: 16px;
+}
+.kw-table thead th {
+  background: var(--bg-secondary);
+  padding: 14px 20px;
+  font-weight: 600; font-size: 15px;
+  text-align: left;
+  color: var(--label);
+  border-bottom: 1px solid var(--separator);
+}
+.kw-table tbody td {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--separator);
+  vertical-align: top;
+  line-height: 1.55;
+  color: var(--label-secondary);
+}
+.kw-table tbody tr:last-child td { border-bottom: 0; }
+.kw-table .kw-type {
+  font-weight: 600; color: var(--label);
+  white-space: nowrap;
+}
+.kw-tag {
+  display: inline-block;
+  padding: 3px 10px; margin: 2px 4px 2px 0;
+  border-radius: var(--r-pill);
+  background: var(--accent-fill); color: var(--accent);
+  font-size: 14px; font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+/* ── 퀴즈 카드 ── */
+.quiz-card {
+  padding: var(--sp-5) 28px; border-radius: var(--r-lg);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-card);
+  margin-bottom: 18px;
+}
+.quiz-card__num {
+  font-size: var(--type-label); font-weight: 600; letter-spacing: .04em;
+  color: var(--accent); margin-bottom: 10px;
+}
+.quiz-card__text {
+  font-size: 16px; font-weight: 400; line-height: 1.6;
+  color: var(--label-secondary); font-style: italic;
+}
+.quiz-card__answer {
+  margin-top: var(--sp-3);
+  font-size: 15px; font-weight: 600; color: var(--accent);
+  display: none;
+}
+.quiz-card.show-answer .quiz-card__answer { display: block; }
+.quiz-btn {
+  margin-top: var(--sp-4);
+  padding: 10px 22px; border-radius: var(--r-pill);
+  border: 1px solid var(--accent); background: var(--accent-fill);
+  font-size: 15px; font-weight: 600; color: var(--accent);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.quiz-btn:hover { background: var(--accent); color: #fff; }
+
+/* ── 연구 방법론 설명 카드 ── */
+.method-section { margin-top: var(--sp-5); }
+.method-section__title {
+  font-size: var(--type-title); font-weight: 700;
+  letter-spacing: var(--tracking-title); line-height: 1.3;
+  margin-bottom: var(--sp-4);
+}
+.method-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.method-card {
+  padding: var(--sp-5) 28px; border-radius: var(--r-lg);
+  background: var(--bg-elevated); border: 1px solid var(--separator); box-shadow: var(--shadow-card);
+}
+.method-card__label {
+  font-size: var(--type-caption); font-weight: 600; letter-spacing: .04em;
+  color: var(--accent); margin-bottom: 8px;
+}
+.method-card__title {
+  font-size: 18px; font-weight: 600; letter-spacing: var(--tracking-title); line-height: 1.3;
+  margin-bottom: 10px;
+}
+.method-card__body {
+  font-size: 16px; font-weight: 400; line-height: 1.65;
+  color: var(--label-secondary);
+}
+.method-card__body b { color: var(--label); font-weight: 600; }
+
+/* clue reveal */
+.clue-keyword { font-weight: 400; }
+.clue-abstract.is-revealed .clue-keyword {
+  font-weight: 700; color: var(--label);
+  background: rgba(134,38,51,.10); padding: 1px 3px; border-radius: 4px;
+}
+.clue-reveal-btn {
+  margin-top: var(--sp-4); padding: 10px 28px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  border: none; border-radius: 12px;
+  background: var(--accent); color: #fff;
+  transition: opacity .2s;
+}
+.clue-reveal-btn:hover { opacity: .85; }
+.clue-reveal-btn.is-revealed { background: var(--label-tertiary); }
+.clue-answer {
+  margin-top: var(--sp-4); font-size: 15px;
+  color: var(--accent); font-weight: 600;
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height .4s ease, opacity .3s ease;
+}
+.clue-answer.is-revealed { max-height: 300px; opacity: 1; }
+
+/* statement */
+.statement {
+  font-size: var(--type-display); font-weight: 600;
+  letter-spacing: var(--tracking-title); line-height: 1.3;
+  padding-left: var(--sp-5); border-left: 3px solid var(--accent);
+  text-wrap: balance;
+}
+
+/* ── 플로팅 독 ── */
+.dock {
+  position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 2px;
+  padding: 6px var(--sp-2); border-radius: var(--r-pill);
+  background: var(--material);
+  border: 1px solid var(--separator);
+  box-shadow: var(--shadow-float);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  transition: opacity var(--dur) var(--ease);
+}
+.dock:not(:hover) { opacity: .55; }
+.dock__btn {
+  display: grid; place-items: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  color: var(--label);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+.dock__btn:hover { background: var(--accent-fill); color: var(--accent); }
+.dock__btn:disabled { opacity: .28; cursor: default; }
+.dock__btn:disabled:hover { background: none; color: var(--label); }
+
+/* ── 반응형 ── */
+@media (max-width: 860px) { :root { --sidebar-w: 240px; } }
+@media (max-width: 640px) {
+  .sidebar { position: fixed; z-index: 30; height: 100%; box-shadow: var(--shadow-float); }
+  .stage__slide { justify-content: flex-start; padding-top: var(--sp-3); }
+}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- ── 사이드바 ── -->
+    <aside class="sidebar" id="sidebar">
+      <header class="sidebar__head">
+        <div class="sidebar__brand">
+          <p class="sidebar__eyebrow">2026 예방실습</p>
+          <h1 class="sidebar__title">근거의 피라미드</h1>
+        </div>
+        <button class="icon-btn" id="collapseBtn" title="사이드바 접기" aria-label="사이드바 접기">
+          <svg viewBox="0 0 24 24" class="icon"><rect x="3" y="4" width="18" height="16" rx="3"></rect><line x1="9" y1="4" x2="9" y2="20"></line></svg>
+        </button>
+      </header>
+
+      <nav class="sidebar__nav" id="nav"></nav>
+
+      <footer class="sidebar__foot">
+        <p class="progress__label">Progress</p>
+        <div class="progress__track"><div class="progress__bar" id="progressBar"></div></div>
+        <p class="progress__count"><b id="progressNow">1</b> / <span id="progressTotal"></span></p>
+      </footer>
+    </aside>
+
+    <!-- ── 메인 스테이지 ── -->
+    <main class="stage" id="stage">
+      <button class="icon-btn stage__expand" id="expandBtn" title="사이드바 펼치기" aria-label="사이드바 펼치기">
+        <svg viewBox="0 0 24 24" class="icon"><rect x="3" y="4" width="18" height="16" rx="3"></rect><line x1="9" y1="4" x2="9" y2="20"></line></svg>
+      </button>
+
+      <div class="stage__topbar">
+        <span id="crumbSection"></span>
+        <span id="crumbDeck">근거의 피라미드</span>
+      </div>
+
+      <div class="stage__slide" id="slideContainer"></div>
+
+      <div class="stage__footbar">
+        <span id="footPage">01 / 14</span>
+      </div>
+
+      <!-- 플로팅 독 -->
+      <div class="dock">
+        <button class="dock__btn" id="prevBtn" title="이전 (←)" aria-label="이전 장표">
+          <svg viewBox="0 0 24 24" class="icon"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button class="dock__btn" id="nextBtn" title="다음 (→)" aria-label="다음 장표">
+          <svg viewBox="0 0 24 24" class="icon"><polyline points="9 6 15 12 9 18"></polyline></svg>
+        </button>
+      </div>
+    </main>
+  </div>
+
+<script>
+/* ── 슬라이드 데이터 ── */
+const SLIDES = [
+  {
+    id: "cover",
+    section: "표지",
+    eyebrow: "예방한의학실습",
+    title: "근거의 피라미드",
+    lead: "초록만 보고 연구 유형을 구분하는 법 — 오늘 논문을 고를 때 바로 씁니다",
+    layout: "cover",
+    body: `<div class="cover-info">
+      <p class="cover-info__name">예방한의학교실</p>
+      <p class="cover-info__sub">근거중심의학(EBM) 기초</p>
+    </div>`
+  },
+  {
+    id: "problem",
+    section: "도입",
+    eyebrow: "도입 · 문제 상황",
+    title: "같은 질문,\n다른 대답",
+    lead: "\"침 치료가 요통에 효과가 있을까?\" — 두 논문이 반대 결론을 내렸다면, <b>어느 쪽을 믿어야 할까?</b>",
+    layout: "cards",
+    body: `<div class="cards">
+      <div class="card">
+        <p class="card__label">사례 A</p>
+        <h3 class="card__title">증례보고</h3>
+        <p class="card__body">"침 치료 후 환자 3명의 통증이 감소했다"<br><br>비교군 없음 · 치료자가 직접 평가 · 대상자 3명</p>
+      </div>
+      <div class="card">
+        <p class="card__label">사례 B</p>
+        <h3 class="card__title">무작위배정 비교임상시험(RCT)</h3>
+        <p class="card__body">"120명을 무작위 배정하여 침 vs 가짜침을 비교한 결과, VAS 차이 유의하지 않음"<br><br>비교군 있음 · 이중눈가림 · 120명</p>
+      </div>
+    </div>`
+  },
+  {
+    id: "three-questions",
+    section: "도입",
+    eyebrow: "도입 · 핵심 질문",
+    title: "근거 수준을 가르는\n세 가지 질문",
+    lead: "아래 세 조건을 <b>얼마나 잘 갖추었느냐</b>에 따라 피라미드에서의 위치가 달라집니다",
+    layout: "cards",
+    body: `<div class="cards">
+      <div class="card">
+        <p class="card__label">Q1</p>
+        <h3 class="card__title">비교군이 있는가?</h3>
+        <p class="card__body">치료 효과인지 자연 경과인지 구분하려면, 치료를 받지 않은 그룹과의 비교가 필수</p>
+      </div>
+      <div class="card">
+        <p class="card__label">Q2</p>
+        <h3 class="card__title">무작위 배정인가?</h3>
+        <p class="card__body">연구자가 의도적으로 그룹을 나누면 선택 편향이 생김. 무작위 배정이 이를 막아준다</p>
+      </div>
+      <div class="card">
+        <p class="card__label">Q3</p>
+        <h3 class="card__title">눈가림을 했는가?</h3>
+        <p class="card__body">참여자·평가자가 배정을 모르면 위약 효과와 평가 편향을 통제할 수 있다</p>
+      </div>
+    </div>`
+  },
+  {
+    id: "pyramid-full",
+    section: "피라미드",
+    eyebrow: "피라미드 · 전체 구조",
+    title: "근거의 피라미드",
+    lead: "아래에서 위로 갈수록 <b>비뚤림(bias)이 잘 통제</b>되어 인과 추론의 신뢰도가 높아집니다",
+    layout: "custom",
+    body: `<div class="pyramid-wrapper">
+      <svg class="pyramid-svg" viewBox="0 0 780 420" xmlns="http://www.w3.org/2000/svg">
+        <!-- 피라미드 단계 -->
+        <polygon points="390,18 310,100 470,100" fill="#862633" opacity="0.95"/>
+        <text x="390" y="70" text-anchor="middle" fill="#fff" font-size="13" font-weight="600" font-family="Pretendard Variable, sans-serif">SR / 메타분석</text>
+
+        <polygon points="305,108 235,188 545,188 475,108" fill="#862633" opacity="0.75"/>
+        <text x="390" y="155" text-anchor="middle" fill="#fff" font-size="13" font-weight="600" font-family="Pretendard Variable, sans-serif">무작위배정 비교임상시험 (RCT)</text>
+
+        <polygon points="230,196 170,268 610,268 550,196" fill="#862633" opacity="0.55"/>
+        <text x="390" y="225" text-anchor="middle" fill="#fff" font-size="13" font-weight="600" font-family="Pretendard Variable, sans-serif">코호트 · 환자대조군 · 단면연구</text>
+        <text x="390" y="250" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="11" font-family="Pretendard Variable, sans-serif">관찰연구</text>
+
+        <polygon points="165,276 105,348 675,348 615,276" fill="#862633" opacity="0.35"/>
+        <text x="390" y="305" text-anchor="middle" fill="#1d1d1f" font-size="13" font-weight="600" font-family="Pretendard Variable, sans-serif">증례보고 · 증례시리즈</text>
+        <text x="390" y="330" text-anchor="middle" fill="#6e6e73" font-size="11" font-family="Pretendard Variable, sans-serif">비교군 없음</text>
+
+        <polygon points="100,356 50,420 730,420 680,356" fill="#862633" opacity="0.18"/>
+        <text x="390" y="390" text-anchor="middle" fill="#1d1d1f" font-size="13" font-weight="600" font-family="Pretendard Variable, sans-serif">전문가 의견 · 기초/동물실험</text>
+
+        <!-- 좌측 라벨 -->
+        <text x="30" y="70" text-anchor="start" fill="#862633" font-size="12" font-weight="700" font-family="Pretendard Variable, sans-serif">높은</text>
+        <text x="30" y="86" text-anchor="start" fill="#862633" font-size="12" font-weight="700" font-family="Pretendard Variable, sans-serif">신뢰도</text>
+        <line x1="38" y1="95" x2="38" y2="380" stroke="#862633" stroke-width="1.5" opacity="0.3"/>
+        <text x="30" y="400" text-anchor="start" fill="#86868b" font-size="12" font-weight="500" font-family="Pretendard Variable, sans-serif">낮은</text>
+        <text x="30" y="416" text-anchor="start" fill="#86868b" font-size="12" font-weight="500" font-family="Pretendard Variable, sans-serif">신뢰도</text>
+        <polygon points="38,95 33,105 43,105" fill="#862633" opacity="0.5"/>
+        <polygon points="38,380 33,370 43,370" fill="#86868b" opacity="0.5"/>
+      </svg>
+    </div>`
+  },
+  {
+    id: "pyramid-bottom",
+    section: "피라미드",
+    eyebrow: "피라미드 · 아래쪽",
+    title: "전문가 의견부터\n증례보고까지",
+    lead: "비교군이 없거나 체계적 설계가 부족한 단계. <b>탐색적 가치</b>는 있지만 인과 관계를 주장하기 어렵습니다",
+    layout: "bullets",
+    body: `<div class="bullets">
+      <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>전문가 의견 · 기초/동물실험</b> — 임상 근거의 출발점이지만, 사람에게 바로 적용할 수 없다<br><span style="font-size:14px;color:var(--label-tertiary);">예) Kim et al. "Electroacupuncture reduces inflammatory pain in a rat model of colitis." <i>J Acupunct Meridian Stud</i>, 2019</span></p></div>
+      <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>증례보고(Case Report) / 증례시리즈</b> — 비교군 없이 한두 명(또는 소수)의 경과를 기술. 새로운 현상 발견에 유용하나 효과를 증명할 수 없다<br><span style="font-size:14px;color:var(--label-tertiary);">예) Lee S. "Acupuncture for intractable hiccups: a case report." <i>J Altern Complement Med</i>, 2005</span></p></div>
+      <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>관찰연구(코호트 · 환자대조군 · 단면)</b> — 비교군은 있지만 무작위 배정이 아님. 교란 변수를 완전히 통제하기 어렵다<br><span style="font-size:14px;color:var(--label-tertiary);">예) Witt CM et al. "Acupuncture in patients with osteoarthritis of the knee: a randomised trial." <i>Lancet</i>, 2005 (이 논문은 RCT이나, 같은 주제의 코호트로는: MacPherson H et al. "Acupuncture for chronic pain: individual patient data meta-analysis." <i>Arch Intern Med</i>, 2012)</span></p></div>
+    </div>`
+  },
+  {
+    id: "pyramid-top",
+    section: "피라미드",
+    eyebrow: "피라미드 · 위쪽",
+    title: "RCT에서\nSR/메타분석까지",
+    lead: "비뚤림을 체계적으로 통제하는 단계. <b>근거중심의학(EBM)</b>의 핵심 영역입니다",
+    layout: "bullets",
+    body: `<div class="bullets">
+      <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>무작위배정 비교임상시험(RCT)</b> — 무작위 배정 + 비교군 + (가능하면) 눈가림으로 bias를 최소화. 단일 연구로는 가장 높은 수준<br><span style="font-size:14px;color:var(--label-tertiary);">예) Vickers AJ et al. "Acupuncture for chronic pain: individual patient data meta-analysis." <i>Arch Intern Med</i>, 2012</span></p></div>
+      <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>체계적 문헌고찰(Systematic Review) / 메타분석</b> — 같은 주제의 RCT를 모아서 미리 정한 기준으로 선별·평가·통합. 개별 RCT보다 검정력이 높고, 비뚤림 위험까지 판단<br><span style="font-size:14px;color:var(--label-tertiary);">예) Linde K et al. "Acupuncture for tension-type headache." <i>Cochrane Database Syst Rev</i>, 2016</span></p></div>
+    </div>`
+  },
+  {
+    id: "casereport-detail",
+    section: "연구 유형 해설",
+    eyebrow: "연구 유형 해설 · 증례보고",
+    title: "증례보고\nCase Report",
+    lead: "비교군 없이 <b>한 명 또는 소수 환자</b>의 진단·치료·경과를 상세히 기술하는 연구",
+    layout: "custom",
+    body: `<div class="method-grid">
+      <div class="method-card">
+        <p class="method-card__label">방법론</p>
+        <h3 class="method-card__title">어떻게 수행하나?</h3>
+        <p class="method-card__body">
+          <b>대상:</b> 보통 1~5명의 환자<br><br>
+          <b>설계:</b> 비교군 없음. 환자의 현병력, 치료 과정, 경과를 시간 순으로 기술<br><br>
+          <b>분석:</b> 통계 분석 없음. 서술적 기술(narrative description)이 핵심<br><br>
+          <b>강점:</b> 희귀 질환, 새로운 치료법, 예기치 못한 부작용 등 <b>첫 발견</b>을 보고할 때 유용<br><br>
+          <b>한계:</b> 인과 관계 추론 불가. "이 치료 때문에 나았는지, 자연 경과인지" 구분 못 함
+        </p>
+      </div>
+      <div class="method-card">
+        <p class="method-card__label">논문 구성</p>
+        <h3 class="method-card__title">어떤 순서로 쓰이나?</h3>
+        <p class="method-card__body">
+          <b>1. Introduction</b> — 왜 이 증례를 보고하는지 (임상적 의의)<br><br>
+          <b>2. Case Presentation</b> — 환자 정보, 주소, 현병력, 검사 결과, 치료 내용, 경과<br><br>
+          <b>3. Discussion</b> — 기존 문헌과 비교, 기전 추정, 한계점<br><br>
+          <b>4. Conclusion</b> — 임상적 시사점 요약
+        </p>
+      </div>
+    </div>`
+  },
+  {
+    id: "casereport-example",
+    section: "연구 유형 해설",
+    eyebrow: "연구 유형 해설 · 증례보고",
+    title: "증례보고 — 초록 읽기",
+    lead: "실제 초록에서 <b>증례보고임을 알 수 있는 단서</b>를 찾아봅시다",
+    layout: "custom",
+    body: `<div class="method-grid">
+      <div class="method-card" style="grid-column: 1 / -1;">
+        <p class="method-card__label">초록 예시</p>
+        <h3 class="method-card__title">단서를 찾아라</h3>
+        <p class="method-card__body clue-abstract" data-clue="casereport">
+          "We report <span class="clue-keyword">a case of</span> a 45-year-old female patient with chronic low back pain unresponsive to conventional therapy. She received 12 sessions of acupuncture over 6 weeks. Pain intensity decreased from VAS 8 to VAS 3. <span class="clue-keyword">No adverse events</span> were observed."
+        </p>
+        <button class="clue-reveal-btn" onclick="revealClue(this)">정답 확인</button>
+        <div class="clue-answer">
+          ✓ "a case of" — 단일 환자 기술<br>
+          ✓ 비교군 언급 없음 — 통제 조건이 없다<br>
+          ✓ 통계 분석 없음 — 기술적 보고
+        </div>
+      </div>
+    </div>`
+  },
+  {
+    id: "rct-detail",
+    section: "연구 유형 해설",
+    eyebrow: "연구 유형 해설 · RCT",
+    title: "무작위배정 비교임상시험\nRCT",
+    lead: "참여자를 <b>무작위로 실험군과 대조군에 배정</b>하여 중재의 효과를 비교하는 연구",
+    layout: "custom",
+    body: `<div class="method-grid">
+      <div class="method-card">
+        <p class="method-card__label">방법론</p>
+        <h3 class="method-card__title">어떻게 수행하나?</h3>
+        <p class="method-card__body">
+          <b>무작위 배정(Randomization):</b> 난수표·컴퓨터 프로그램으로 배정 → 선택 편향 차단<br><br>
+          <b>비교군(Control):</b> 위약(placebo), 가짜침(sham), 기존 치료 등<br><br>
+          <b>눈가림(Blinding):</b><br>
+          · 단일 눈가림 — 참여자만 모름<br>
+          · 이중 눈가림 — 참여자 + 평가자 모두 모름<br>
+          · 삼중 눈가림 — 참여자 + 평가자 + 분석자<br><br>
+          <b>통계:</b> 군 간 평균·비율 비교(t-test, ANOVA, χ² 등). ITT 분석 권장
+        </p>
+      </div>
+      <div class="method-card">
+        <p class="method-card__label">논문 구성</p>
+        <h3 class="method-card__title">CONSORT 기준</h3>
+        <p class="method-card__body">
+          <b>1. Introduction</b> — 배경, 연구 목적, 가설<br><br>
+          <b>2. Methods</b> — 연구 설계, 대상자 기준, 무작위 배정법, 중재 프로토콜, 결과 변수, 통계 방법<br><br>
+          <b>3. Results</b> — CONSORT flow diagram, 기저선 비교표, 1차·2차 결과변수, 부작용<br><br>
+          <b>4. Discussion</b> — 결과 해석, 한계점, 기존 연구와 비교<br><br>
+          <b>CONSORT Statement</b>를 따르면 보고의 투명성이 보장된다
+        </p>
+      </div>
+    </div>`
+  },
+  {
+    id: "rct-example",
+    section: "연구 유형 해설",
+    eyebrow: "연구 유형 해설 · RCT",
+    title: "RCT — 초록 읽기",
+    lead: "실제 초록에서 <b>RCT임을 알 수 있는 단서</b>를 찾아봅시다",
+    layout: "custom",
+    body: `<div class="method-grid">
+      <div class="method-card" style="grid-column: 1 / -1;">
+        <p class="method-card__label">초록 예시</p>
+        <h3 class="method-card__title">단서를 찾아라</h3>
+        <p class="method-card__body clue-abstract" data-clue="rct">
+          "A total of 120 patients were <span class="clue-keyword">randomly assigned</span> to receive either acupuncture (n=60) or <span class="clue-keyword">sham acupuncture</span> (n=60). The primary outcome was the VAS score at week 8. Both groups were assessed by a <span class="clue-keyword">blinded evaluator</span>. The acupuncture group showed a mean reduction of 2.1 points compared to 1.4 in the sham group (p=0.03)."
+        </p>
+        <button class="clue-reveal-btn" onclick="revealClue(this)">정답 확인</button>
+        <div class="clue-answer">
+          ✓ "randomly assigned" — 무작위 배정<br>
+          ✓ "sham acupuncture" — 대조군(비교군)<br>
+          ✓ "blinded evaluator" — 눈가림<br>
+          ✓ p=0.03 — 통계적 비교 분석
+        </div>
+      </div>
+    </div>`
+  },
+  {
+    id: "sr-detail",
+    section: "연구 유형 해설",
+    eyebrow: "연구 유형 해설 · 체계적 문헌고찰",
+    title: "체계적 문헌고찰\nSystematic Review",
+    lead: "특정 연구 질문에 대한 기존 연구를 <b>체계적으로 검색·선별·평가·종합</b>하는 연구",
+    layout: "custom",
+    body: `<div class="method-grid">
+      <div class="method-card">
+        <p class="method-card__label">방법론</p>
+        <h3 class="method-card__title">어떻게 수행하나?</h3>
+        <p class="method-card__body">
+          <b>1. 연구 질문 설정(PICO):</b> 환자군(P), 중재(I), 비교(C), 결과(O)를 미리 정의<br><br>
+          <b>2. 체계적 검색:</b> PubMed, Cochrane, CNKI 등 복수 DB에서 사전 정의된 검색식으로 검색<br><br>
+          <b>3. 선별(Screening):</b> 포함/제외 기준에 따라 2명 이상의 독립 연구자가 선별<br><br>
+          <b>4. 비뚤림 위험 평가:</b> RoB 2, ROBINS-I 등 도구로 개별 연구의 질 평가<br><br>
+          <b>5. 메타분석(선택):</b> 동질적인 연구끼리 효과 크기를 통계적으로 통합
+        </p>
+      </div>
+      <div class="method-card">
+        <p class="method-card__label">논문 구성</p>
+        <h3 class="method-card__title">PRISMA 기준</h3>
+        <p class="method-card__body">
+          <b>1. Introduction</b> — 기존 리뷰와의 차별점, 연구 목적<br><br>
+          <b>2. Methods</b> — PICO, 검색 전략, 선별 과정, 비뚤림 평가 도구, 분석 방법<br><br>
+          <b>3. Results</b> — PRISMA flow diagram, 포함된 연구 특성표, Forest plot, 이질성 검정<br><br>
+          <b>4. Discussion</b> — 근거의 확실성(GRADE), 한계, 임상적 함의<br><br>
+          <b>PRISMA Statement</b>를 따르면 재현 가능한 리뷰가 된다
+        </p>
+      </div>
+    </div>`
+  },
+  {
+    id: "sr-example",
+    section: "연구 유형 해설",
+    eyebrow: "연구 유형 해설 · 체계적 문헌고찰",
+    title: "SR — 초록 읽기",
+    lead: "실제 초록에서 <b>체계적 문헌고찰(SR)임을 알 수 있는 단서</b>를 찾아봅시다",
+    layout: "custom",
+    body: `<div class="method-grid">
+      <div class="method-card" style="grid-column: 1 / -1;">
+        <p class="method-card__label">초록 예시</p>
+        <h3 class="method-card__title">단서를 찾아라</h3>
+        <p class="method-card__body clue-abstract" data-clue="sr">
+          "We <span class="clue-keyword">systematically searched</span> PubMed, EMBASE, and the Cochrane Library for <span class="clue-keyword">randomized controlled trials</span> evaluating acupuncture for migraine prophylaxis. Of 1,842 records identified, <span class="clue-keyword">22 trials (n=4,985)</span> met the inclusion criteria. <span class="clue-keyword">Meta-analysis</span> showed that acupuncture was associated with a significant reduction in migraine frequency (MD −1.56 days/month, 95% CI −2.21 to −0.91)."
+        </p>
+        <button class="clue-reveal-btn" onclick="revealClue(this)">정답 확인</button>
+        <div class="clue-answer">
+          ✓ "systematically searched" — 체계적 검색<br>
+          ✓ 복수 DB (PubMed, EMBASE, Cochrane) — 포괄적 검색<br>
+          ✓ "22 trials met the inclusion criteria" — 선별 과정<br>
+          ✓ "Meta-analysis", MD, 95% CI — 통계적 통합
+        </div>
+      </div>
+    </div>`
+  },
+  {
+    id: "signal-words",
+    section: "초록 읽기",
+    eyebrow: "초록 읽기 · 신호 단어",
+    title: "Methods에서\n유형을 읽는 신호",
+    lead: "제목만으로는 부족합니다. <b>Methods 키워드</b>가 연구 유형을 결정합니다",
+    layout: "custom",
+    body: `<table class="kw-table">
+      <thead><tr><th>연구 유형</th><th>초록 Methods에서 찾을 키워드</th></tr></thead>
+      <tbody>
+        <tr><td class="kw-type">증례보고</td><td><span class="kw-tag">a case of</span><span class="kw-tag">we report</span><span class="kw-tag">case series</span><span class="kw-tag">a patient</span><br>비교군·통계 분석 언급이 없음</td></tr>
+        <tr><td class="kw-type">RCT</td><td><span class="kw-tag">randomized</span><span class="kw-tag">randomly assigned</span><span class="kw-tag">control group</span><span class="kw-tag">blinded</span><span class="kw-tag">placebo</span><span class="kw-tag">sham</span><span class="kw-tag">CONSORT</span></td></tr>
+        <tr><td class="kw-type">SR / 메타분석</td><td><span class="kw-tag">systematic review</span><span class="kw-tag">systematically searched</span><span class="kw-tag">meta-analysis</span><span class="kw-tag">inclusion criteria</span><span class="kw-tag">PRISMA</span><span class="kw-tag">forest plot</span></td></tr>
+      </tbody>
+    </table>`
+  },
+  {
+    id: "quiz",
+    section: "실습",
+    eyebrow: "실습 · 유형 구분",
+    title: "이 초록은 무슨 유형?",
+    lead: "아래 초록 세 개를 읽고 <b>증례보고 / RCT / SR</b> 중 하나를 맞혀 봅시다. 정답 보기를 눌러 확인하세요.",
+    layout: "custom",
+    body: `<div>
+      <div class="quiz-card" id="quiz1">
+        <p class="quiz-card__num">초록 1</p>
+        <p class="quiz-card__text">"A 62-year-old male with diabetic peripheral neuropathy was treated with electroacupuncture at ST36 and SP6 for 4 weeks. Pain intensity measured by NRS decreased from 7 to 2. No adverse events were reported during the treatment period."</p>
+        <p class="quiz-card__answer">→ 증례보고 (Case Report) — "a 62-year-old male" 한 명, 비교군·통계 없음</p>
+      </div>
+      <div class="quiz-card" id="quiz2">
+        <p class="quiz-card__num">초록 2</p>
+        <p class="quiz-card__text">"Eighty patients with chronic knee osteoarthritis were randomly allocated to receive either manual acupuncture (n=40) or sham acupuncture (n=40) twice weekly for 8 weeks. A blinded assessor measured WOMAC scores at baseline and weeks 4 and 8. The acupuncture group showed significantly greater improvement (p &lt; 0.01)."</p>
+        <p class="quiz-card__answer">→ RCT — "randomly allocated", "sham acupuncture"(대조군), "blinded assessor"</p>
+      </div>
+      <div class="quiz-card" id="quiz3">
+        <p class="quiz-card__num">초록 3</p>
+        <p class="quiz-card__text">"We systematically searched PubMed, EMBASE, CNKI, and the Cochrane Library up to March 2024 for randomized controlled trials of moxibustion for irritable bowel syndrome. Fourteen RCTs involving 1,127 participants met the inclusion criteria. Meta-analysis using a random-effects model showed a pooled RR of 1.83 (95% CI 1.52–2.21) in favor of moxibustion."</p>
+        <p class="quiz-card__answer">→ 체계적 문헌고찰 / 메타분석 (SR) — "systematically searched", 4개 DB, "meta-analysis", pooled RR</p>
+      </div>
+      <button class="quiz-btn" onclick="document.querySelectorAll('.quiz-card').forEach(c=>c.classList.add('show-answer'))">정답 보기</button>
+    </div>`
+  },
+  {
+    id: "summary",
+    section: "정리",
+    eyebrow: "정리",
+    title: "오늘 배운 것",
+    lead: "",
+    layout: "custom",
+    body: `<p class="statement">피라미드 위로 갈수록<br>비교군 · 무작위 · 눈가림이 갖추어지고,<br>bias가 줄어 인과 추론 신뢰도가 높아진다.</p>
+    <div class="bullets" style="margin-top:var(--sp-7);">
+      <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text">초록의 <b>Methods</b> 키워드만으로 증례보고 / RCT / SR을 구분할 수 있다</p></div>
+      <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text">이 다음 단계에서 후보 논문을 고를 때, <b>방금 배운 유형 구분을 그대로 씁니다</b></p></div>
+    </div>`
+  }
+];
+
+/* ── 렌더링 엔진 ── */
+let current = 0;
+
+function buildNav() {
+  const nav = document.getElementById('nav');
+  let html = '';
+  let lastSection = '';
+  SLIDES.forEach((s, i) => {
+    if (s.section !== lastSection) {
+      lastSection = s.section;
+    }
+    const title = (s.title || '').replace(/\n/g, ' ');
+    html += `<button class="nav__item" data-index="${i}">
+      <span class="nav__text">
+        <span class="nav__name">${title}</span>
+        <span class="nav__desc">${s.section}</span>
+      </span>
+    </button>`;
+  });
+  nav.innerHTML = html;
+  document.getElementById('progressTotal').textContent = SLIDES.length;
+}
+
+function renderSlide(index) {
+  const s = SLIDES[index];
+  const container = document.getElementById('slideContainer');
+  const stage = document.getElementById('stage');
+
+  stage.removeAttribute('data-layout');
+  if (s.layout === 'cover') stage.setAttribute('data-layout', 'cover');
+
+  const nl2br = (str) => String(str || '').replace(/\n/g, '<br>');
+
+  container.innerHTML = `
+    <article class="slide slide--${s.layout}" id="slide-${s.id}">
+      ${s.eyebrow ? `<p class="slide__eyebrow">${s.eyebrow}</p>` : ''}
+      ${s.title ? `<h2 class="slide__title">${nl2br(s.title)}</h2>` : ''}
+      ${s.lead ? `<p class="slide__lead">${s.lead}</p>` : ''}
+      ${s.body ? `<div class="slide__body">${s.body}</div>` : ''}
+    </article>`;
+
+  // Update chrome
+  document.getElementById('crumbSection').textContent = s.section;
+  document.getElementById('footPage').textContent =
+    `${String(index + 1).padStart(2, '0')} / ${SLIDES.length}`;
+  document.getElementById('progressBar').style.width =
+    `${((index + 1) / SLIDES.length) * 100}%`;
+  document.getElementById('progressNow').textContent = index + 1;
+
+  // Update nav
+  document.querySelectorAll('.nav__item').forEach((el, i) => {
+    el.classList.toggle('is-active', i === index);
+  });
+
+  // Update buttons
+  document.getElementById('prevBtn').disabled = index === 0;
+  document.getElementById('nextBtn').disabled = index === SLIDES.length - 1;
+
+  current = index;
+}
+
+function go(index) {
+  if (index < 0 || index >= SLIDES.length) return;
+  renderSlide(index);
+}
+
+function revealClue(btn) {
+  const card = btn.closest('.method-card');
+  const abstract = card.querySelector('.clue-abstract');
+  const answer = card.querySelector('.clue-answer');
+  const revealed = abstract.classList.toggle('is-revealed');
+  answer.classList.toggle('is-revealed', revealed);
+  btn.classList.toggle('is-revealed', revealed);
+  btn.textContent = revealed ? '정답 숨기기' : '정답 확인';
+}
+
+/* ── 이벤트 ── */
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav();
+  renderSlide(0);
+
+  document.getElementById('prevBtn').addEventListener('click', () => go(current - 1));
+  document.getElementById('nextBtn').addEventListener('click', () => go(current + 1));
+
+  document.getElementById('nav').addEventListener('click', (e) => {
+    const btn = e.target.closest('.nav__item');
+    if (btn) go(Number(btn.dataset.index));
+  });
+
+  document.getElementById('collapseBtn').addEventListener('click', () => {
+    document.body.classList.add('is-collapsed');
+  });
+  document.getElementById('expandBtn').addEventListener('click', () => {
+    document.body.classList.remove('is-collapsed');
+  });
+
+  // 키보드 네비게이션
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); go(current + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); go(current - 1); }
+    if (e.key === '\\') { document.body.classList.toggle('is-collapsed'); }
+  });
+});
+</script>
+</body>
+</html>
