@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>산업재해 지표 계산 · 예방의학 실습</title>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+:root {
+  --bg:#ffffff;--bg-secondary:#f3f6f5;--bg-elevated:#ffffff;
+  --label:#15242B;--label-secondary:#3A4C52;--label-tertiary:#65767B;
+  --separator:#D3DAD8;--fill-hover:rgba(14,90,82,.04);
+  --accent:#0E5A52;--accent-emphasis:#094A43;--accent-fill:#E2EDEA;
+  --amber:#A9740C;--amber-soft:#FAF0DC;
+  --alert:#98352A;--alert-soft:#F8E7E4;
+  --success:#1A7A3A;--success-soft:#E4F5EA;
+  --shadow-card:0 1px 3px rgba(0,0,0,.04);
+  --shadow-float:0 8px 28px rgba(0,0,0,.12);
+  --material:rgba(255,255,255,.72);
+  --font:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"SF Pro Display","Apple SD Gothic Neo",system-ui,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --type-hero:clamp(34px,3.8vw,56px);--type-display:clamp(26px,2.8vw,40px);
+  --type-title:clamp(19px,1.6vw,24px);--type-lead:clamp(17px,1.4vw,20px);
+  --type-body:17px;--type-caption:13px;--type-label:12px;
+  --tracking-hero:-.025em;--tracking-title:-.02em;--tracking-body:-.01em;--tracking-label:.06em;
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:24px;--sp-6:32px;--sp-7:48px;--sp-8:64px;
+  --safe-x:clamp(24px,5.2vw,80px);--safe-y:clamp(20px,3.2vh,42px);
+  --sidebar-w:280px;--measure:940px;
+  --r-sm:8px;--r-md:12px;--r-lg:18px;--r-xl:22px;--r-pill:980px;
+  --ease:cubic-bezier(.28,.11,.32,1);--dur-fast:.18s;--dur:.3s;--dur-slow:.5s;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--font);font-size:var(--type-body);letter-spacing:var(--tracking-body);background:var(--bg-secondary);color:var(--label);-webkit-font-smoothing:antialiased;overflow:hidden}
+h1,h2,h3,h4,p{margin:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
+.icon{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+.app{display:flex;height:100vh}
+.sidebar{width:var(--sidebar-w);flex:0 0 var(--sidebar-w);display:flex;flex-direction:column;background:var(--bg-secondary);border-right:1px solid var(--separator);transition:margin-left var(--dur) var(--ease),opacity var(--dur-fast) var(--ease)}
+body.is-collapsed .sidebar{margin-left:calc(var(--sidebar-w)*-1);opacity:0}
+.sidebar__head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-5) 20px var(--sp-4)}
+.sidebar__eyebrow{font-size:var(--type-label);font-weight:600;letter-spacing:var(--tracking-label);color:var(--accent);text-transform:uppercase;margin-bottom:var(--sp-1)}
+.sidebar__title{font-size:19px;font-weight:700;letter-spacing:var(--tracking-title)}
+.icon-btn{display:grid;place-items:center;width:32px;height:32px;border-radius:var(--r-sm);color:var(--label-tertiary);transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}
+.icon-btn:hover{background:var(--accent-fill);color:var(--accent)}
+.stage__expand{position:absolute;top:14px;left:14px;z-index:5;opacity:0;pointer-events:none;transition:opacity var(--dur) var(--ease)}
+body.is-collapsed .stage__expand{opacity:1;pointer-events:auto}
+.sidebar__nav{flex:1;min-height:0;overflow-y:auto;padding:0 14px var(--sp-4);scrollbar-width:thin}
+.sidebar__nav::-webkit-scrollbar{width:6px}
+.sidebar__nav::-webkit-scrollbar-thumb{background:var(--separator);border-radius:3px}
+.nav__group{display:flex;align-items:center;gap:var(--sp-2);width:100%;text-align:left;font-size:11px;font-weight:600;letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--label-tertiary);padding:var(--sp-4) var(--sp-2) var(--sp-2);transition:color var(--dur-fast) var(--ease)}
+.nav__group:hover{color:var(--label)}
+.nav__item{position:relative;display:flex;align-items:center;gap:var(--sp-3);width:100%;text-align:left;padding:8px var(--sp-3);margin-bottom:1px;border-radius:var(--r-md);transition:background var(--dur-fast) var(--ease)}
+.nav__item:hover{background:var(--fill-hover)}
+.nav__item.is-active{background:var(--accent-fill)}
+.nav__item.is-active::before{content:"";position:absolute;left:0;top:50%;width:3px;height:22px;margin-top:-11px;border-radius:0 3px 3px 0;background:var(--accent)}
+.nav__item.is-active .nav__name{color:var(--accent)}
+.nav__text{display:block;min-width:0}
+.nav__name{display:block;font-size:14px;font-weight:600;letter-spacing:var(--tracking-body)}
+.nav__desc{display:block;font-size:var(--type-caption);font-weight:400;color:var(--label-tertiary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar__foot{padding:var(--sp-4) 20px 18px;border-top:1px solid var(--separator)}
+.progress__label{font-size:11px;font-weight:600;letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--label-tertiary)}
+.progress__track{height:3px;border-radius:2px;background:var(--separator);margin:var(--sp-2) 0 7px;overflow:hidden}
+.progress__bar{height:100%;width:0;border-radius:2px;background:var(--accent);transition:width var(--dur) var(--ease)}
+.progress__count{font-size:var(--type-caption);color:var(--label-secondary);font-variant-numeric:tabular-nums}
+.progress__count b{color:var(--label);font-weight:600}
+
+.stage{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg)}
+.stage__topbar,.stage__footbar{display:flex;justify-content:space-between;align-items:center;padding:var(--safe-y) var(--safe-x);font-size:var(--type-caption);font-weight:400;color:var(--label-tertiary);font-variant-numeric:tabular-nums;flex:0 0 auto}
+.stage__footbar{justify-content:flex-end}
+.stage__slide{flex:1;min-height:0;overflow:hidden;padding:0 var(--safe-x);display:flex;flex-direction:column;justify-content:center}
+.stage__slide.scrollable{overflow-y:auto;justify-content:flex-start;padding-top:var(--sp-5);padding-bottom:var(--sp-8)}
+@keyframes slide-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.slide{animation:slide-in var(--dur-slow) var(--ease) both;max-width:1120px;width:100%}
+
+.slide__eyebrow{font-size:15px;font-weight:600;letter-spacing:var(--tracking-body);color:var(--accent);margin-bottom:10px}
+.slide__title{font-size:var(--type-hero);font-weight:700;letter-spacing:var(--tracking-hero);line-height:1.05;text-wrap:balance}
+.slide__lead{font-size:var(--type-lead);font-weight:500;letter-spacing:var(--tracking-title);line-height:1.45;margin-top:var(--sp-5);color:var(--label-secondary);max-width:var(--measure);text-wrap:pretty}
+.slide__lead b{color:var(--label);font-weight:600}
+.slide__body{margin-top:var(--sp-6)}
+
+.stage[data-layout="cover"]::after{content:"";position:absolute;top:-14%;right:-12%;width:min(52vw,640px);aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,rgba(14,90,82,.12),rgba(14,90,82,.03) 62%,rgba(14,90,82,0) 78%);pointer-events:none;z-index:0}
+.stage[data-layout="cover"]::before{content:"";position:absolute;bottom:-16%;right:2%;width:min(34vw,400px);aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,rgba(14,90,82,.06),rgba(14,90,82,0) 70%);pointer-events:none;z-index:0}
+.stage__topbar,.stage__slide,.stage__footbar,.dock{position:relative;z-index:1}
+.slide--cover .slide__title{font-size:clamp(38px,4.6vw,64px);line-height:1.04;margin-top:var(--sp-2)}
+.slide--cover .slide__lead{margin-top:var(--sp-4);max-width:680px}
+.slide--cover .slide__body{margin-top:var(--sp-6)}
+
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:var(--sp-5)}
+.flow span{background:var(--bg-elevated);border:1px solid var(--separator);border-radius:var(--r-pill);padding:9px 18px;font-size:15px;font-weight:500}
+.flow i{font-style:normal;color:var(--label-tertiary);font-size:14px}
+
+.cards{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.card{padding:var(--sp-5) 28px;border-radius:var(--r-lg);background:var(--bg-elevated);border:1px solid var(--separator);box-shadow:var(--shadow-card)}
+.card__label{font-size:var(--type-caption);font-weight:600;letter-spacing:.04em;color:var(--accent);margin-bottom:10px}
+.card__title{font-size:var(--type-title);font-weight:600;letter-spacing:var(--tracking-title);line-height:1.2}
+.card__body{font-size:16px;font-weight:400;line-height:1.65;color:var(--label-secondary);margin-top:10px}
+.card__body b{color:var(--label);font-weight:600}
+
+.bullets{display:grid;gap:16px;max-width:var(--measure)}
+.bullet{display:flex;gap:14px;align-items:baseline}
+.bullet__dot{flex:0 0 auto;width:6px;height:6px;border-radius:50%;background:var(--accent);transform:translateY(-3px)}
+.bullet__text{font-size:clamp(16px,1.4vw,19px);font-weight:400;line-height:1.55;color:var(--label-secondary)}
+.bullet__text b{color:var(--label);font-weight:600}
+
+.formula-box{background:#0F1D23;border-radius:var(--r-lg);padding:22px 28px;margin-bottom:16px;color:#DCE6E4;font-size:18px;font-weight:500;line-height:1.7;letter-spacing:.02em;text-align:center}
+.formula-box .tag{color:#7FA8A0;font-size:var(--type-label);font-weight:600;margin-bottom:8px;display:block;text-align:left}
+
+.data-table{width:100%;border-collapse:collapse;margin-top:16px}
+.data-table th,.data-table td{padding:12px 16px;text-align:left;font-size:15px;line-height:1.5;border-bottom:1px solid var(--separator)}
+.data-table th{background:var(--accent-fill);color:var(--accent);font-weight:700;font-size:var(--type-caption);letter-spacing:.04em;text-transform:uppercase}
+.data-table td{color:var(--label-secondary)}
+.data-table td b{color:var(--label);font-weight:600}
+.data-table tr:last-child td{border-bottom:0}
+.data-table-wrap{border:1px solid var(--separator);border-radius:var(--r-lg);overflow:hidden;background:var(--bg-elevated);box-shadow:var(--shadow-card)}
+
+.answer-box{border-left:3px solid var(--success);background:var(--success-soft);padding:16px 20px;border-radius:0 var(--r-sm) var(--r-sm) 0;margin-top:16px;font-size:17px;line-height:1.6;color:var(--label-secondary)}
+.answer-box b{color:var(--success);font-weight:700}
+.solution-box{background:var(--bg-secondary);border-radius:var(--r-lg);padding:20px 24px;margin-top:16px;font-size:15px;line-height:1.75;color:var(--label-secondary)}
+.solution-box b{color:var(--label);font-weight:600}
+.solution-box .step-label{color:var(--accent);font-weight:700;font-size:var(--type-caption);letter-spacing:.04em;margin-bottom:4px;display:block}
+
+.note-box{border-left:3px solid var(--amber);background:var(--amber-soft);padding:14px 18px;border-radius:0 var(--r-sm) var(--r-sm) 0;margin-top:16px;font-size:15px;line-height:1.6;color:var(--label-secondary)}
+.note-box b{color:var(--label);font-weight:700}
+
+.case-text{background:var(--bg-secondary);border-radius:var(--r-lg);padding:22px 26px;font-size:15px;line-height:1.75;color:var(--label-secondary);max-height:400px;overflow-y:auto}
+.case-text b{color:var(--label);font-weight:600}
+
+.contrast-grid{display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-top:16px}
+.contrast-grid>div{background:var(--bg-secondary);border-radius:var(--r-sm);padding:16px 18px;font-size:15px;line-height:1.6;color:var(--label-secondary)}
+.contrast-grid h4{margin:0 0 8px;font-size:var(--type-caption);font-weight:700;letter-spacing:.04em}
+.contrast-grid .con{border-left:3px solid var(--alert)}.contrast-grid .con h4{color:var(--alert)}
+.contrast-grid .pro{border-left:3px solid var(--success)}.contrast-grid .pro h4{color:var(--success)}
+
+.ladder{border:1px solid var(--separator);border-radius:var(--r-lg);overflow:hidden;background:var(--bg-elevated)}
+.ladder .row{border-bottom:1px solid var(--separator)}.ladder .row:last-child{border-bottom:0}
+.ladder .row-btn{width:100%;text-align:left;background:none;border:0;font:inherit;cursor:pointer;padding:14px 20px;display:flex;gap:14px;align-items:center;color:var(--label);transition:background var(--dur-fast) var(--ease)}
+.ladder .row-btn:hover{background:#F6F9F8}
+.step-n{flex:0 0 26px;height:26px;border-radius:50%;background:var(--accent-fill);color:var(--accent);font-size:var(--type-caption);font-weight:700;display:grid;place-items:center}
+.ladder .row-body{display:none;padding:0 20px 16px 60px;color:var(--label-secondary);font-size:15px;line-height:1.6}
+.ladder .row.open .row-body{display:block}
+.ladder .row.open .row-btn{background:#F6F9F8}
+.chev{margin-left:auto;color:var(--label-tertiary);font-size:var(--type-caption)}
+
+/* ── 정답 버튼 ── */
+.reveal-wrap{margin-top:20px}
+.reveal-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:12px 24px;border-radius:var(--r-md);
+  background:var(--accent);color:#fff;font-size:15px;font-weight:600;
+  transition:background var(--dur-fast) var(--ease),transform var(--dur-fast) var(--ease);
+  box-shadow:0 2px 8px rgba(14,90,82,.25);
+}
+.reveal-btn:hover{background:var(--accent-emphasis);transform:translateY(-1px)}
+.reveal-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.reveal-content{
+  display:none;margin-top:16px;
+  animation:slide-in var(--dur) var(--ease) both;
+}
+.reveal-content.show{display:block}
+.reveal-btn.used{background:var(--label-tertiary);box-shadow:none;pointer-events:none}
+
+/* ── Q 블록 ── */
+.q-block{
+  background:var(--bg-elevated);border:1px solid var(--separator);border-radius:var(--r-lg);
+  padding:20px 24px;margin-bottom:18px;box-shadow:var(--shadow-card);
+}
+.q-label{font-size:var(--type-caption);font-weight:700;letter-spacing:.04em;color:var(--accent);margin-bottom:8px}
+.q-text{font-size:16px;font-weight:500;line-height:1.6;color:var(--label)}
+.q-hint{font-size:14px;color:var(--label-tertiary);margin-top:6px}
+.q-answer-table{width:100%;border-collapse:collapse;margin-top:12px}
+.q-answer-table td{padding:10px 14px;font-size:15px;line-height:1.55;border-bottom:1px dashed var(--separator);color:var(--label-secondary);vertical-align:top}
+.q-answer-table td:first-child{font-weight:600;color:var(--accent);width:120px}
+.q-answer-table tr:last-child td{border-bottom:0}
+
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;padding:3px 10px;border-radius:var(--r-pill);text-transform:uppercase}
+.badge--prof{background:var(--accent);color:#fff}
+.badge--student{background:var(--accent-fill);color:var(--accent)}
+
+.dock{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);display:flex;align-items:center;gap:2px;padding:6px var(--sp-2);border-radius:var(--r-pill);background:var(--material);border:1px solid var(--separator);box-shadow:var(--shadow-float);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);transition:opacity var(--dur) var(--ease)}
+.dock:not(:hover){opacity:.55}
+.dock__btn{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;color:var(--label);transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease),opacity var(--dur-fast) var(--ease)}
+.dock__btn:hover{background:var(--accent-fill);color:var(--accent)}
+.dock__btn:disabled{opacity:.28;cursor:default}
+.dock__btn:disabled:hover{background:none;color:var(--label)}
+
+@media(max-width:1100px){.contrast-grid{grid-template-columns:1fr}}
+@media(max-width:860px){:root{--sidebar-w:240px}}
+@media(max-width:640px){.sidebar{position:fixed;z-index:30;height:100%;box-shadow:var(--shadow-float)}.stage__slide{justify-content:flex-start;padding-top:var(--sp-3)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <header class="sidebar__head">
+      <div class="sidebar__brand">
+        <p class="sidebar__eyebrow">예방의학 실습</p>
+        <h1 class="sidebar__title">산업재해 지표 계산</h1>
+      </div>
+      <button class="icon-btn" id="collapseBtn" title="사이드바 접기" aria-label="사이드바 접기">
+        <svg viewBox="0 0 24 24" class="icon"><rect x="3" y="4" width="18" height="16" rx="3"></rect><line x1="9" y1="4" x2="9" y2="20"></line></svg>
+      </button>
+    </header>
+    <nav class="sidebar__nav" id="nav"></nav>
+    <footer class="sidebar__foot">
+      <p class="progress__label">Progress</p>
+      <div class="progress__track"><div class="progress__bar" id="progressBar"></div></div>
+      <p class="progress__count"><b id="progressNow">1</b> / <span id="progressTotal"></span></p>
+    </footer>
+  </aside>
+  <main class="stage" id="stage">
+    <button class="icon-btn stage__expand" id="expandBtn" title="사이드바 펼치기" aria-label="사이드바 펼치기">
+      <svg viewBox="0 0 24 24" class="icon"><rect x="3" y="4" width="18" height="16" rx="3"></rect><line x1="9" y1="4" x2="9" y2="20"></line></svg>
+    </button>
+    <div class="stage__topbar">
+      <span id="crumbSection"></span>
+      <span><span class="badge badge--prof">교수용</span> &nbsp; 산업재해 지표 계산</span>
+    </div>
+    <div class="stage__slide" id="slideContainer"></div>
+    <div class="stage__footbar"><span id="footPage"></span></div>
+    <div class="dock">
+      <button class="dock__btn" id="prevBtn" title="이전 (←)"><svg viewBox="0 0 24 24" class="icon"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+      <button class="dock__btn" id="nextBtn" title="다음 (→)"><svg viewBox="0 0 24 24" class="icon"><polyline points="9 6 15 12 9 18"></polyline></svg></button>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ── 정답 토글 헬퍼 ── */
+function revealAnswer(btn){
+  const wrap=btn.parentElement;
+  const content=wrap.querySelector('.reveal-content');
+  content.classList.add('show');
+  btn.classList.add('used');
+  btn.innerHTML='정답 확인 완료';
+}
+const REVEAL=`<button class="reveal-btn" onclick="revealAnswer(this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>정답 확인</button>`;
+
+const SLIDES=[
+/* ───── 표지 ───── */
+{
+  id:"cover",section:"표지",layout:"cover",
+  eyebrow:"예방의학 및 실습 · 실습 9–10",
+  title:"산업재해 지표 계산",
+  lead:"도수율 · 강도율 · 장해등급을 직접 계산하고,\n산재보험 심사 사례를 분석합니다.",
+  body:`<div class="flow"><span>개념 학습</span><i>→</i><span>도수율 · 강도율</span><i>→</i><span>장해등급</span><i>→</i><span>종합 문제</span><i>→</i><span>사례 분석</span></div>`
+},
+
+/* ───── 개념 1 ───── */
+{
+  id:"freq-rate",section:"개념",eyebrow:"개념 1",
+  title:"도수율\n(Frequency Rate)",
+  lead:"<b>100만 근로시간당 재해 발생건수</b>를 나타내는 지표입니다.",
+  body:`<div class="formula-box"><span class="tag">공식</span>도수율 = 재해 발생건수 ÷ 연간 총 근로시간 × 1,000,000</div>
+  <div class="bullets">
+    <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>의미:</b> 100만 근로시간당 재해 발생건수</p></div>
+    <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>단위:</b> 건/백만 근로시간</p></div>
+    <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>활용:</b> 재해 발생 빈도 비교 (사업장 간, 연도 간)</p></div>
+    <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>분모:</b> 연간 총 근로시간 = 근로자 수 × 1인당 연간 근로시간</p></div>
+  </div>`
+},
+/* ───── 개념 2 ───── */
+{
+  id:"sev-rate",section:"개념",eyebrow:"개념 2",
+  title:"강도율\n(Severity Rate)",
+  lead:"<b>1,000 근로시간당 근로손실일수</b>를 나타내는 지표입니다.",
+  body:`<div class="formula-box"><span class="tag">공식</span>강도율 = 근로손실일수 ÷ 연간 총 근로시간 × 1,000</div>
+  <div class="bullets">
+    <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>의미:</b> 1,000 근로시간당 근로손실일수</p></div>
+    <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>활용:</b> 재해의 심각도(강도) 비교</p></div>
+    <div class="bullet"><span class="bullet__dot"></span><p class="bullet__text"><b>핵심:</b> 휴업일수를 직접 쓰지 않고 → <b>근로손실일수로 환산</b> 후 계산</p></div>
+  </div>`
+},
+/* ───── 개념 3 ───── */
+{
+  id:"loss-table",section:"개념",eyebrow:"개념 3",
+  title:"근로손실일수\n환산표",
+  lead:"장해등급에 따라 정해진 근로손실일수를 적용합니다.",
+  scrollable:true,
+  body:`<div class="data-table-wrap"><table class="data-table">
+    <thead><tr><th>구분</th><th>해당 등급</th><th>근로손실일수</th></tr></thead>
+    <tbody>
+      <tr><td><b>사망</b></td><td>—</td><td><b>7,500일</b></td></tr>
+      <tr><td><b>장해 1~3급</b></td><td>영구 전노동불능</td><td><b>7,500일</b></td></tr>
+      <tr><td>장해 4급</td><td></td><td>5,500일</td></tr><tr><td>장해 5급</td><td></td><td>4,000일</td></tr>
+      <tr><td>장해 6급</td><td></td><td>3,000일</td></tr><tr><td>장해 7급</td><td></td><td>2,200일</td></tr>
+      <tr><td>장해 8급</td><td></td><td>1,500일</td></tr><tr><td>장해 9급</td><td></td><td>1,000일</td></tr>
+      <tr><td>장해 10급</td><td></td><td>600일</td></tr><tr><td>장해 11급</td><td></td><td>400일</td></tr>
+      <tr><td>장해 12급</td><td></td><td>200일</td></tr><tr><td>장해 13급</td><td></td><td>100일</td></tr>
+      <tr><td>장해 14급</td><td></td><td>50일</td></tr>
+      <tr><td><b>휴업재해 (무등급)</b></td><td>일시 노동불능</td><td><b>휴업일수 × 300/365</b></td></tr>
+    </tbody></table></div>`
+},
+/* ───── 개념 4 ───── */
+{
+  id:"grade-find",section:"개념",eyebrow:"개념 4",
+  title:"장해등급\n찾는 법 (별표 6)",
+  lead:"산업재해보상보험법 시행령 별표 6을 활용하여 장해등급을 확인합니다.",
+  body:`<div class="ladder">
+    <div class="row"><button class="row-btn" type="button" onclick="toggleRow(this)"><span class="step-n">1</span><span>신체 부위와 장해 내용을 파악한다</span><span class="chev">펼치기</span></button><div class="row-body">예) 한쪽 귀 청력 손실, 손가락 절단, 척주 기능장해 등</div></div>
+    <div class="row"><button class="row-btn" type="button" onclick="toggleRow(this)"><span class="step-n">2</span><span>별표 6에서 해당 조건을 찾아 등급 확인</span><span class="chev">펼치기</span></button><div class="row-body">예) "한쪽 귀의 청력이 귀에 대고 말하지 않으면 큰 말소리를 알아듣지 못하게 된 사람" → <b>10급</b></div></div>
+    <div class="row"><button class="row-btn" type="button" onclick="toggleRow(this)"><span class="step-n">3</span><span>복합 장해의 경우 조정 기준 적용</span><span class="chev">펼치기</span></button><div class="row-body">둘 이상의 장해가 있는 경우, 가장 높은 등급 또는 조정 기준에 따라 최종 등급을 결정합니다.</div></div>
+  </div>`
+},
+
+/* ───── 문제 1 ───── */
+{
+  id:"q1",section:"계산 문제",eyebrow:"문제 1",
+  title:"도수율 계산",
+  lead:"다음은 A 사업장의 2024년도 산업재해 발생 현황이다.\nA 사업장의 <b>도수율</b>은?",
+  body:`<div class="data-table-wrap"><table class="data-table">
+    <thead><tr><th>항목</th><th>수치</th></tr></thead>
+    <tbody><tr><td>연간 총 근로시간</td><td><b>800,000시간</b></td></tr><tr><td>재해 발생건수 (휴업재해)</td><td><b>4건</b></td></tr></tbody>
+  </table></div>
+  <div class="reveal-wrap">${REVEAL}
+    <div class="reveal-content">
+      <div class="solution-box"><span class="step-label">풀이</span>도수율 = 4 ÷ (800,000 ÷ 1,000,000) = 4 ÷ 0.8 = <b>5.0</b></div>
+      <div class="answer-box"><b>정답: 5.0</b></div>
+    </div>
+  </div>`
+},
+
+/* ───── 문제 2 ───── */
+{
+  id:"q2",section:"계산 문제",eyebrow:"문제 2",
+  title:"강도율 계산",
+  lead:"다음은 B 사업장의 연간 산업재해 자료이다. B 사업장의 <b>강도율</b>은?\n(필요 시 휴업일수는 근로손실일수로 환산해서 계산할 것)",
+  scrollable:true,
+  body:`<div class="data-table-wrap"><table class="data-table">
+    <thead><tr><th>항목</th><th>수치</th></tr></thead>
+    <tbody>
+      <tr><td>상시 근로자수 (연평균)</td><td><b>400명</b></td></tr>
+      <tr><td>1인 연간 총 근로시간</td><td><b>2,400시간</b> (300일 × 8시간)</td></tr>
+      <tr><td>영구 전노동불능 재해자: 신체 2급</td><td><b>2명</b></td></tr>
+      <tr><td>영구 일부노동불능 재해자: 신체 10급</td><td><b>5명</b></td></tr>
+      <tr><td>휴업재해로 인한 총 휴업일수</td><td><b>1,000일</b></td></tr>
+    </tbody></table></div>
+  <div class="reveal-wrap">${REVEAL}
+    <div class="reveal-content">
+      <div class="solution-box">
+        <span class="step-label">① 총 근로손실일수</span>
+        • 신체 2급 2명: 7,500 × 2 = <b>15,000일</b><br>
+        • 신체 10급 5명: 600 × 5 = <b>3,000일</b><br>
+        • 휴업 1,000일: 1,000 × 300/365 ≈ <b>822일</b><br>
+        → 합계: 15,000 + 3,000 + 822 = <b>18,822일</b><br><br>
+        <span class="step-label">② 연간 총 근로시간</span>400 × 2,400 = <b>960,000</b><br><br>
+        <span class="step-label">③ 강도율</span>18,822 ÷ 960,000 × 1,000 = <b>19.6</b>
+      </div>
+      <div class="answer-box"><b>정답: 19.6</b></div>
+    </div>
+  </div>`
+},
+
+/* ───── 문제 3 ───── */
+{
+  id:"q3",section:"계산 문제",eyebrow:"문제 3",
+  title:"장해등급 판정",
+  lead:"근로자 K는 근무 중 소음에 장시간 노출되어\n한 귀의 청력이 귀에 대고 말하지 않으면\n큰 말소리를 알아듣지 못하게 되었다.\n\nK가 받을 것으로 예상되는 <b>장해등급</b>은?",
+  body:`<div class="reveal-wrap">${REVEAL}
+    <div class="reveal-content">
+      <div class="solution-box"><span class="step-label">별표 6 해당 조항</span>"한 귀의 청력이 귀에 대고 말하지 않으면 큰 말소리를 알아듣지 못하게 된 사람"<br>→ 산재보험법 시행령 별표 6 <b>제10급 6호</b></div>
+      <div class="answer-box"><b>정답: 10급</b></div>
+    </div>
+  </div>`
+},
+
+/* ───── 문제 4 ───── */
+{
+  id:"q4",section:"계산 문제",eyebrow:"문제 4",
+  title:"D 공장 종합 문제",
+  lead:"전자부품을 제조하는 D 공장의 2024년도 산업재해 현황.\n연간 총 근로시간: <b>1,200,000시간</b>",
+  scrollable:true,
+  body:`<div class="data-table-wrap" style="margin-bottom:20px"><table class="data-table">
+    <thead><tr><th>구분</th><th>성별/연령</th><th>재해 내용</th><th>장해등급</th></tr></thead>
+    <tbody>
+      <tr><td><b>A</b></td><td>남성/37세</td><td>고온 작업 중 낙상으로 척주에 중등도의 기능장해와 극도의 척추 신경근장해가 남음</td><td><b>?</b></td></tr>
+      <tr><td><b>B</b></td><td>여성/44세</td><td>기계 프레스기 손가락 절단 (오른손 둘째, 셋째 손가락)</td><td><b>?</b></td></tr>
+      <tr><td><b>C</b></td><td>남성/55세</td><td>지게차에 치여 골반 골절, 입원 치료 후 180일 휴업</td><td>무등급 (휴업재해)</td></tr>
+    </tbody></table></div>
+  <div class="card"><h3 class="card__title">소문제</h3><p class="card__body"><b>4-1</b> A, B의 장해등급은?<br><b>4-2</b> 총 근로손실일수는?<br><b>4-3</b> 강도율은?</p></div>
+  <div class="reveal-wrap">${REVEAL}
+    <div class="reveal-content">
+      <div class="data-table-wrap" style="margin-bottom:16px"><table class="data-table">
+        <thead><tr><th>구분</th><th>근거</th><th>등급</th><th>손실일수</th></tr></thead>
+        <tbody>
+          <tr><td><b>A</b></td><td>척주 중등도 기능장해 + 극도 신경근장해</td><td><b>7급</b></td><td><b>2,200일</b></td></tr>
+          <tr><td><b>B</b></td><td>오른손 둘째·셋째 손가락 절단</td><td><b>9급</b></td><td><b>1,000일</b></td></tr>
+          <tr><td><b>C</b></td><td>180일 휴업</td><td>—</td><td><b>148일</b></td></tr>
+        </tbody></table></div>
+      <div class="solution-box">
+        <span class="step-label">4-2 총 근로손실일수</span>2,200 + 1,000 + 148 = <b>3,348일</b><br><br>
+        <span class="step-label">4-3 강도율</span>3,348 × 1,000 ÷ 1,200,000 = <b>2.79</b>
+      </div>
+      <div class="answer-box"><b>A=7급, B=9급 │ 손실일수 3,348일 │ 강도율 2.79</b></div>
+    </div>
+  </div>`
+},
+
+/* ═══════ 사례 분석 ═══════ */
+{
+  id:"case-intro",section:"사례 분석",eyebrow:"사례 분석 · 도입",
+  title:"산재보험 심사 사례\n분석하기",
+  lead:"실제 산업재해보상보험 심사 청구 사례를 읽고 분석합니다.\n각 섹션의 문제를 풀고 정답 버튼으로 확인하세요.",
+  body:`<div class="flow"><span>처분 내용</span><i>→</i><span>청구인 주장</span><i>→</i><span>사실관계</span><i>→</i><span>전문가 의견</span></div>
+  <div class="note-box" style="margin-top:24px"><b>상병명:</b> 요추 추간판 탈출증 (제4-5요추간)<br><b>직종:</b> 철근공 (건설현장)<br><b>쟁점:</b> 업무와 상병 간 상당인과관계 인정 여부</div>`
+},
+
+/* ── 01 처분 내용 ── */
+{
+  id:"case-disp",section:"01 처분 내용",eyebrow:"01 처분 내용",
+  title:"처분 내용",
+  scrollable:true,
+  body:`<div class="case-text" style="margin-top:0">
+    <b>가.</b> 청구인은 장기간 건설현장에서 철근공으로 근무하면서 허리 부위 신체부담이 누적된 결과 2021. 4. 14. 상병명 <b>'요추 추간판 탈출증(제4-5요추간)'</b>을 진단받았다는 재해경위로 2024. 2. 22. 원처분기관에 산재보험법에 따른 최초요양을 신청하였다.<br><br>
+    <b>나.</b> 원처분기관은 ◯◯업무상질병판정위원회의 판정 결과에 따라 청구인에게 <b>최초요양 불승인 처분</b>을 하였다.
+  </div>`
+},
+{
+  id:"case-disp-q",section:"01 처분 내용",eyebrow:"01 처분 내용 · 문제",
+  title:"처분 내용 문제",
+  scrollable:true,
+  body:`
+  <div class="q-block">
+    <p class="q-label">Q1</p>
+    <p class="q-text">본문에 나타난 근로자의 상황을 요약해 봅시다.</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <table class="q-answer-table"><tr><td>직종</td><td>철근공</td></tr><tr><td>진단받은 병명</td><td>요추 추간판 탈출증(제4-5요추간)</td></tr><tr><td>주장하는 발병 원인</td><td>장기간 건설현장에서 근무하며 허리 부위 신체부담이 누적됨</td></tr></table>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q2</p>
+    <p class="q-text">업무상질병판정위원회는 어떤 과정을 거쳐 결론을 내렸나요?<br><span class="q-hint">📌 참조: 산재보험법 제37조 제1항, 시행령 제34조 제3항 별표 3</span></p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <table class="q-answer-table">
+        <tr><td>소수의견</td><td>철근공의 작업 자세와 중량물 취급을 고려할 때 업무 관련성이 인정됨.</td></tr>
+        <tr><td>다수의견</td><td>근거 자료상 근무 기간이 짧고 업무 공백이 있어 업무 관련성을 인정하기 어려움.</td></tr>
+        <tr><td>의견이 갈린 이유</td><td>철근공 직종이 허리에 위험하다는 것에는 동의하지만, 이 환자의 '개인적 노출량'이 충분한지에 대해 판단이 모호했음</td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q3</p>
+    <p class="q-text">'다수 위원'들이 산재 승인을 거절한 구체적인 근거 2가지를 본문에서 찾아 적으세요.</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <table class="q-answer-table">
+        <tr><td>수행 기간</td><td>객관적인 자료상 약 <b>8</b>년에 조금 못 미침.</td></tr>
+        <tr><td>업무 공백</td><td>2019년 11월부터 재해일까지 약 <b>1년 5개월(17개월)</b> 동안 근무 이력이 확인되지 않음.</td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q4</p>
+    <p class="q-text">판정위원회는 왜 '공백 기간'이 존재하는 것을 문제 삼았을까요?</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="answer-box"><b>빈칸 채우기:</b> "신청인이 부적절한 작업 자세나 반복되는 동작을 (<b>장기간</b>) 강도 높고 (<b>지속적으로</b>) 수행하였다고 보기 미흡하다."</div>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q5</p>
+    <p class="q-text">여러분이 이 아저씨의 주치의라면, 판정위원회의 결론 중 어떤 부분이 가장 억울할 것 같나요?</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="solution-box"><span class="step-label">모범답안 (힌트)</span>
+        • 8년이라는 시간이 정말 짧은가? (하루 작업 강도를 봐야 하지 않나?)<br>
+        • 1년 5개월의 공백 동안 아파서 쉬었을 수도 있는데, '부담 작업이 없었다'고만 해석하는 것이 타당한가?<br>
+        • 서류에 찍힌 8년이 전체 인생을 다 대변하는가? (누락된 기록은 없을까?)<br><br>
+        ▶ 위 세 가지 힌트 중 하나 이상을 활용한 서술 허용. 정해진 정답 없음.
+      </div>
+    </div></div>
+  </div>`
+},
+
+/* ── 02 청구인 주장 ── */
+{
+  id:"case-claim",section:"02 청구인 주장",eyebrow:"02 청구인 주장",
+  title:"청구인 주장",
+  scrollable:true,
+  body:`<div class="case-text" style="margin-top:0">
+    <b>1)</b> 청구인은 2006년부터 철근공으로 종사해 왔음에도 총 일용근로일수를 <b>1,560일</b>만 인정하여 8년 미달 직력만 산정한 것은 실제 근로내역을 반영하지 못함.<br><br>
+    소득금액증명원상 총 근로소득을 건설업 임금실태조사 보고서상 노임 단가로 나누면:<br>
+    → 2006~2021년 5월까지 <b>3,621일 (18년 1개월)</b> 확인<br><br>
+    <b>2)</b> 직력을 8년 미만으로 보더라도 업무관련성을 인정한 소수위원 의견 존재, 2021년 근로소득(17,159,000원)으로 보아 2021년 5월 이전에도 근로하였음, 직종 및 상병이 추정의 원칙 대상일 정도로 업무관련성 높음<br><br>
+    <b>3)</b> 국세청 일용근로소득지급명세서 기반 재산정: 2006~2021년 2분기까지 총 <b>3,539일 (17년 6개월)</b>
+  </div>`
+},
+{
+  id:"case-claim-q",section:"02 청구인 주장",eyebrow:"02 청구인 주장 · 문제",
+  title:"청구인 주장 문제",
+  scrollable:true,
+  body:`
+  <div class="q-block">
+    <p class="q-label">Q1</p>
+    <p class="q-text">청구인은 자신의 경력이 8년이 아니라 17년 이상이라고 주장합니다. 그 근거 3가지를 본문에서 찾아 적으세요.</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <table class="q-answer-table">
+        <tr><td>①</td><td>국세청 일용근로소득지급명세서: 실제 지급된 급여 기록</td></tr>
+        <tr><td>②</td><td>소득금액증명원: 가장 객관적인 총 소득 증빙 자료</td></tr>
+        <tr><td>③</td><td>건설업 임금실태조사 보고서: 노임 단가 산출의 공식 기준점</td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q2</p>
+    <p class="q-text">청구인이 제시한 '추정 근로일수' 계산식을 완성하고, 산출된 결과를 적으세요.</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="solution-box">
+        <span class="step-label">계산식</span>해당 연도 총 근로소득 ÷ 직종별 평균 노임 단가 = 해당 연도 추정 근로일수<br><br>
+        <span class="step-label">결과</span>2006~2021년 2분기까지 총 근로일수: <b>3,539일</b><br>연단위(1년=200일 환산): 약 <b>17년 6개월</b>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">심화 질문</p>
+    <p class="q-text">왜 청구인은 1년을 365일이 아닌 '200일'로 설정하여 환산했을까요? 건설 현장의 특성과 연결 지어 추론해 보세요.</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="solution-box"><span class="step-label">모범답안</span>건설업은 기상(비, 눈), 계절적 요인, 공사 물량 변동 등으로 매일 일하기가 불가능한 직종임. 통상적으로 직업의학적 경력 산정 시 연 200~250일 근로를 1년치 전업 근로로 간주함.</div>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q3</p>
+    <p class="q-text">판정위원회는 1년 5개월의 공백을 문제 삼았습니다. 이에 대해 청구인은 2021년 소득 데이터를 통해 무엇을 입증하려고 하나요?</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="answer-box">2021년 11월 재취업 이후뿐만 아니라, <b>2021년 5월 이전</b>에도 <b>철근공</b>으로 계속 근로하였음을 간접적으로 증명 (즉, 공백기가 실질적으로는 짧거나 계속 일하고 있었음)</div>
+    </div></div>
+  </div>`
+},
+
+/* ── 02 사실관계 ── */
+{
+  id:"case-facts",section:"02 사실관계",eyebrow:"02 사실관계 · 근로관계",
+  title:"사실관계 — 근로관계",
+  scrollable:true,
+  body:`<div class="data-table-wrap" style="margin-bottom:20px"><table class="data-table">
+    <thead><tr><th>항목</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td>채용일자</td><td>2019.08. (2019.11.까지 105일 일용근로)</td></tr>
+      <tr><td>담당 업무</td><td><b>철근공</b></td></tr>
+      <tr><td>통상근로시간</td><td>1일 평균 8시간, 1주 평균 5일</td></tr>
+      <tr><td>근로형태</td><td>고정주간근무</td></tr>
+      <tr><td>작업주기</td><td>주당 5일 정도</td></tr>
+      <tr><td>직무자율성</td><td>라인작업은 아니나 정해진 휴식시간 외에는 작업을 해야 함</td></tr>
+    </tbody></table></div>
+
+  <div class="q-block">
+    <p class="q-label">Q1</p>
+    <p class="q-text">본문 데이터에 근거하여 이 근로자의 노동 강도를 '시간적' 관점에서 분석하세요.</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <table class="q-answer-table">
+        <tr><td>근무 패턴</td><td>고정 주간 근무 / 1주 <b>5</b>일 / 1일 평균 <b>8</b>시간</td></tr>
+        <tr><td>직무 자율성</td><td>라인 작업은 아니나 정해진 휴식시간 외에는 계속 작업해야 함</td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q2</p>
+    <p class="q-text">'자율성이 낮은 작업 환경'은 근육의 피로 회복 주기(Recovery Cycle)에 어떤 영향을 미치며, 이것이 왜 누적 손상의 핵심 기전이 되는지 적으세요.</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="solution-box"><span class="step-label">모범답안</span>자율성이 낮다는 것은 근육이 젖산 등을 배출하고 조직을 수선할 충분한 'Micro-break'를 갖지 못함을 의미함. 이는 결국 섬유륜의 미세 파열이 치유되기 전에 다음 부하가 가해지는 악순환을 만듦.</div>
+    </div></div>
+  </div>`
+},
+
+/* ── 업무내용 ── */
+{
+  id:"case-work",section:"02 사실관계",eyebrow:"02 사실관계 · 업무내용",
+  title:"업무내용 분석",
+  scrollable:true,
+  body:`<div class="cards" style="grid-template-columns:1fr;margin-bottom:20px">
+    <div class="card"><p class="card__label">자재운반 (20%)</p><p class="card__body">1회 평균 100Kg, 1일 40회 이상 → 하루 총 4,000Kg 이상</p></div>
+    <div class="card"><p class="card__label">가공 (10%)</p><p class="card__body">1일 30~40본 절단, 쪼그리기 자세 45~60분</p></div>
+    <div class="card"><p class="card__label">배근 (35%)</p><p class="card__body">하루 5,000Kg 이상, 1일 200본, 쪼그리기 1~1.5시간</p></div>
+    <div class="card"><p class="card__label">결속 (35%)</p><p class="card__body">1일 3,600회, 1회 3초, 총 3시간</p></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q1</p>
+    <p class="q-text">세부 공정, 위험한 자세, 노출 강도를 분석하세요.<br><span class="q-hint">📌 참조: 산재보험법 시행령 제34조 제3항 별표 3 (신체부담업무)</span></p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>공정</th><th>위험 자세</th><th>노출 강도</th></tr></thead>
+        <tbody>
+          <tr><td>자재운반</td><td>허리 굽히고 들어올린 후 어깨에 올림</td><td>1회 100kg × 1일 40회 → 4,000kg</td></tr>
+          <tr><td>가공</td><td>상체 구부린 자세, 무릎 꿇기/쪼그리기</td><td>30~40본/일, 45~60분 유지</td></tr>
+          <tr><td>배근</td><td>허리 굽힘과 쪼그리기 반복</td><td>5,000kg/일, 200본, 2~3시간</td></tr>
+          <tr><td>결속</td><td>허리 굽히거나 쪼그려 앉아 비틀기</td><td>3,600회/일, 3초/회, 3시간</td></tr>
+        </tbody></table></div>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q2</p>
+    <p class="q-text">위 표의 수치를 합산하여 이 근로자의 허리에 가해진 '하루 누적 하중'을 계산해 보세요.</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="answer-box">일일 최소 취급 중량: (자재운반 4톤 + 배근 5톤) = 총 <b>9톤</b><br>17.5년(3,539일)간의 누적량: 약 <b>31,851톤</b></div>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q3</p>
+    <p class="q-text">단순히 무거운 것을 드는 것 외에, 허리를 더 빨리 망가뜨린 '환경적 악조건' 2가지를 본문에서 찾아 적으세요.</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <table class="q-answer-table">
+        <tr><td>①</td><td>무거운 자재를 들고 계단 및 언덕 오르기</td></tr>
+        <tr><td>②</td><td>철골 위나 고르지 않은 바닥 이동 시 발생하는 무릎 및 요추 비틀림</td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q4</p>
+    <p class="q-text">만약 여러분이 심사위원이라면, MRI상의 '퇴행성 변화'가 단순히 나이 때문이라는 주장에 대해 위 '3만 톤'이라는 숫자를 어떻게 활용하여 반박하시겠습니까?</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="solution-box"><span class="step-label">모범답안</span>3만 톤이라는 수치는 일반적인 생애 주기에서 겪을 수 있는 범위를 수백 배 초과한 노출량임. 따라서 이 환자의 추간판 탈출증은 '자연적 노화'가 아니라 직업적 하중에 의한 <b>'강제적·가속적 퇴행(Accelerated Degeneration)'</b>으로 보는 것이 의학적으로 타당함.</div>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q5</p>
+    <p class="q-text">판정위원회는 1년 5개월의 공백을 두고 "지속적으로 수행했다고 보기 미흡하다"고 했습니다. 환자가 "사실 1년 넘게 허리가 너무 아파서 다른 현장엔 명함도 못 내밀고 집에서 파스만 붙이고 살았습니다"라고 했다면, 위원회의 결론 중 어떤 부분이 가장 의학적으로 '모순적'이라고 느껴지나요?</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="solution-box"><span class="step-label">모범답안</span>판정위원회의 결론 중 가장 모순적인 부분은 <b>'기록의 부재를 건강의 증거로 해석한 것'</b>입니다. 17년간 하루 9톤의 철근을 다룬 근로자에게 1년 5개월의 공백은 '휴식기'가 아니라, 누적된 손상이 임계점을 넘어 실제 질병으로 발현되어 정상적인 노동이 불가능했던 <b>'병가 기간'</b>으로 해석하는 것이 임상적으로 타당합니다.</div>
+    </div></div>
+  </div>`
+},
+
+/* ── 03 전문가 의견 ── */
+{
+  id:"case-expert",section:"03 전문가 의견",eyebrow:"03 전문가 의견",
+  title:"전문가 의견",
+  scrollable:true,
+  body:`<div class="case-text" style="margin-top:0">
+    <b>가. 주치의 소견</b> — 요추부 MRI 검사 결과 제4-5 요추간 추간판 탈출증으로 디스크수핵성형술 시행<br><br>
+    <b>나. 업무상질병판정위원회</b> — 다수 위원: 수행 기간 부족 + 공백 → 불승인 / 소수 위원: 인과관계 인정<br><br>
+    <b>다. 본부 자문의 A (정형)</b> — MRI상 추간판 탈출증 관찰됨. 직업력 평가 필요<br><br>
+    <b>다. 본부 자문의 B (직업환경의학)</b> — 17년 6개월 직력 확인, 누적부담 과중, 공백기 동안 다른 노무에 종사하지 않아 관련성 배제 어려움 → <b>업무관련성 인정 타당</b>
+  </div>`
+},
+{
+  id:"case-expert-q",section:"03 전문가 의견",eyebrow:"03 전문가 의견 · 문제",
+  title:"전문가 의견 문제",
+  scrollable:true,
+  body:`
+  <div class="q-block">
+    <p class="q-label">Q1</p>
+    <p class="q-text">다음은 이 사건을 바라보는 세 전문가 그룹의 핵심 의견입니다. 빈칸을 채우세요.<br><span class="q-hint">📌 참조: 산재보험법 제37조 제1항</span></p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th></th><th>전문가 그룹</th><th>핵심 소견</th><th>판단</th></tr></thead>
+        <tbody>
+          <tr><td>①</td><td>판정위원회 (다수)</td><td>수행 기간이 약 <b>8</b>년에 미달, 약 <b>1년 5개월</b> 업무 공백</td><td>불승인</td></tr>
+          <tr><td>②</td><td>자문의 A (정형)</td><td>MRI상 추간판 탈출증 관찰. <b>직업력의 평가</b>를 요함</td><td>판단 유보</td></tr>
+          <tr><td>③</td><td>자문의 B (직업환경의학)</td><td>약 <b>17년 6개월</b> 직력, 공백은 <b>누적 부담</b>과 발병 관련성 배제 어려움</td><td>승인</td></tr>
+        </tbody></table></div>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q2</p>
+    <p class="q-text">자문의 B는 '1년 5개월의 업무 공백'이라는 판정위원회의 결정적 약점을 어떻게 의학적으로 반박했나요? 본문의 문구를 찾아 그대로 적으세요.</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="answer-box">"이 기간동안 특별히 (<b>노무에 종사하지 않아</b>) 과거 철근공 업무 수행에 따른 (<b>누적부담</b>)과 발병간의 관련성을 배제하기 어려움."</div>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q3 (심화)</p>
+    <p class="q-text">자문의 B의 논리에 따르면, 공백기 동안 다른 일을 하지 않은 것이 왜 '업무 관련성'을 입증하는 데 유리한 증거가 되었을까요?<br><span class="q-hint">Hint: 만약 이 기간에 배달 일을 하거나 다른 무거운 짐을 들었다면 위원회는 뭐라고 했을까요?</span></p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="solution-box"><span class="step-label">모범답안</span>공백기에 다른 육체노동을 하지 않았다는 것은, 질병의 원인이 될 만한 '새로운 외부 요인'이 개입되지 않았음을 뜻함. 즉, 현재의 허리 상태는 오로지 과거 17년간의 철근공 업무에서 기인한 것임을 역설적으로 증명하는 <b>'순수한 누적 효과'</b>의 증거가 됨.</div>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q4</p>
+    <p class="q-text">"2021년 이전에는 요추 부위 치료 이력이 확인되지 않음"이라는 문구에 대해 두 전문가 그룹의 해석이 정반대입니다.</p>
+    <div class="contrast-grid" style="margin-bottom:12px">
+      <div class="con"><h4>판정위원회 (다수)</h4>"기록이 없으니 병이 생길 정도로 힘든 일을 장기간 했다고 보기 미흡하다."</div>
+      <div class="pro"><h4>자문의 B (본부)</h4>"17년 넘게 3만 톤을 날랐는데 기록이 없다는 건, 오히려 참고 일했을 만큼 인과관계가 확실하다는 뜻이다."</div>
+    </div>
+    <p class="q-text">여러분이 주치의라면 어느 해석이 더 '임상적'으로 타당하다고 생각하나요? 그 이유는?</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="solution-box"><span class="step-label">모범답안</span><b>자문의 B의 해석이 임상적으로 훨씬 타당함.</b><br><br>
+        이유: 의료 이용 기록은 환자의 실제 상태를 반영하는 '절대적 지표'가 아니라, 환자의 의료 접근성과 경제적 상황에 좌우되는 데이터임. 17년간 하루 9톤의 철근을 다룬 숙련된 육체 노동자들은 경미한 통증을 '직업적 숙명'으로 받아들이며 약국 파스나 자가 휴식으로 견디는 경향(Under-reporting)이 강함. 따라서 '병원에 가지 않았다'는 기록을 '아프지 않았다'는 근거로 활용하는 것은 <b>임상 현장의 특수성을 무시한 행정 편의적 해석</b>임.</div>
+    </div></div>
+  </div>
+
+  <div class="q-block">
+    <p class="q-label">Q5</p>
+    <p class="q-text">산업재해보상보험심사위원회는 결국 누구의 손을 들어주었을까요?</p>
+    <div class="reveal-wrap">${REVEAL}<div class="reveal-content">
+      <div class="answer-box"><b>최종 결정:</b> 원처분 <b>취소</b> → 업무상 질병 <b>승인</b><br><b>결정적 사유:</b> <b>17년 6개월</b>이라는 장기간의 직력과 그에 따른 <b>높은 신체 부담</b>을 인정함.</div>
+    </div></div>
+  </div>`
+}
+];
+
+/* ───── 엔진 ───── */
+let cur=0;
+function buildNav(){
+  const nav=document.getElementById('nav');let lastSec='';
+  SLIDES.forEach((s,i)=>{
+    if(s.section!==lastSec){const g=document.createElement('button');g.className='nav__group';g.textContent=s.section;g.onclick=()=>go(i);nav.appendChild(g);lastSec=s.section}
+    const btn=document.createElement('button');btn.className='nav__item';btn.id='nav-'+i;
+    btn.innerHTML=`<span class="nav__text"><span class="nav__name">${s.eyebrow||s.section}</span></span>`;
+    btn.onclick=()=>go(i);nav.appendChild(btn);
+  });
+  document.getElementById('progressTotal').textContent=SLIDES.length;
+}
+function renderSlide(index){
+  const s=SLIDES[index];cur=index;
+  document.getElementById('stage').setAttribute('data-layout',s.layout||'');
+  const c=document.getElementById('slideContainer');
+  c.className='stage__slide'+(s.scrollable?' scrollable':'');
+  c.innerHTML=`<div class="slide ${s.layout==='cover'?'slide--cover':''}" key="${index}">
+    ${s.eyebrow?`<p class="slide__eyebrow">${s.eyebrow}</p>`:''}
+    <h2 class="slide__title">${s.title}</h2>
+    ${s.lead?`<p class="slide__lead">${s.lead}</p>`:''}
+    ${s.body?`<div class="slide__body">${s.body}</div>`:''}
+  </div>`;
+  document.getElementById('crumbSection').textContent=s.section;
+  document.getElementById('footPage').textContent=`${String(index+1).padStart(2,'0')} / ${SLIDES.length}`;
+  document.getElementById('progressBar').style.width=`${((index+1)/SLIDES.length)*100}%`;
+  document.getElementById('progressNow').textContent=index+1;
+  document.querySelectorAll('.nav__item').forEach((el,i)=>{el.classList.toggle('is-active',i===index)});
+  const an=document.getElementById('nav-'+index);if(an)an.scrollIntoView({block:'nearest',behavior:'smooth'});
+  document.getElementById('prevBtn').disabled=index===0;
+  document.getElementById('nextBtn').disabled=index===SLIDES.length-1;
+}
+function go(i){if(i>=0&&i<SLIDES.length)renderSlide(i)}
+function toggleRow(btn){const r=btn.parentElement;r.classList.toggle('open');btn.querySelector('.chev').textContent=r.classList.contains('open')?'접기':'펼치기'}
+
+document.getElementById('prevBtn').onclick=()=>go(cur-1);
+document.getElementById('nextBtn').onclick=()=>go(cur+1);
+document.getElementById('collapseBtn').onclick=()=>document.body.classList.add('is-collapsed');
+document.getElementById('expandBtn').onclick=()=>document.body.classList.remove('is-collapsed');
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')go(cur+1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(cur-1)});
+
+buildNav();renderSlide(0);
+</script>
+</body>
+</html>
